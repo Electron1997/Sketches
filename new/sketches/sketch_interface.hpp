@@ -4,9 +4,11 @@
 template<typename TKey, typename TVol>
 struct sketch{
 
-    void update(TKey key, TVol vol);
+    virtual ~sketch() {}
 
-    TVol query(TKey key);
+    virtual void update(TKey key, TVol vol) = 0;
+
+    virtual TVol query(TKey key) = 0;
 
 };
 
