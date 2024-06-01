@@ -10,7 +10,7 @@ TVol CB_sketch<TKey, TVol, D, W, H>::query(TKey key){
         size_t j = H(key, d) % W;
         s = s + volume_table<TKey, TVol, D, W, H>::V[d][j];
     }
-    TVol num = prior<TVol>::mu / prior<TVol>::chi + W * s - D * volume_table<TKey, TVol, D, W, H>::l1;
-    TVol den = 1.0 / prior<TVol>::chi + D * (W - 1);
+    TVol num = prior<TVol>::inv_chi + W * s - D * volume_table<TKey, TVol, D, W, H>::l1;
+    TVol den = prior<TVol>::inv_chi + D * (W - 1);
     return num / den;
 }

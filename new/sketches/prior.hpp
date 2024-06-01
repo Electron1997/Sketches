@@ -7,7 +7,7 @@
 template<typename TVol>
 struct prior{
 
-    TVol mu = 0.0, chi = std::numeric_limits<TVol>::infinity(); // Prior
+    TVol mu = 0.0, inv_chi = 0.0; // Prior
 
 };
 

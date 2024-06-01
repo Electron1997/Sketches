@@ -15,6 +15,9 @@ TVol CCA_sketch<TKey, TVol, D, W, H>::query(TKey key){
     TVol s = 0.0;
     for(size_t d = 0; d < D; ++d){
         size_t w = H(key, d) % W;
+        if(cardinality_table<TKey, D, W, H>::C[d][w] == 0){
+            return 0.0;
+        }
         s = s + volume_table<TKey, TVol, D, W, H>::V[d][w] / cardinality_table<TKey, D, W, H>::C[d][w];
     }
     TVol num = (cardinality_table<TKey, D, W, H>::l0 + W - 1) * s - D * volume_table<TKey, TVol, D, W, H>::l1;

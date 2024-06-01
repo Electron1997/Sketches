@@ -10,6 +10,8 @@ struct volume_table{
 
     void update(TKey key, TVol volume);
 
+    void combine(const volume_table<TKey, TVol, D, W, H>& other);
+
 };
 
 #include "volume_table.tpp"
