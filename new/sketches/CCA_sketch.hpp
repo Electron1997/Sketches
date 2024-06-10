@@ -5,6 +5,16 @@
 #include "sketch_interface.hpp"
 #include "volume_table.hpp"
 
+/**
+ * Implementation of the CCA Sketch described in https://netsec.ethz.ch/publications/papers/dadalt_bayesiansketching_2022.pdf.
+ *
+ * @tparam TKey Key type.
+ * @tparam TVol Volume type.
+ * @tparam D Number of arrays.
+ * @tparam W Counters per array.
+ * @tparam H Hash function.
+ * 
+ **/
 template<typename TKey, typename TVol, size_t D, size_t W, uint32_t (*H)(const TKey&, const size_t&)>
 struct CCA_sketch : public sketch<TKey, TVol>, public volume_table<TKey, TVol, D, W, H>, public cardinality_table<TKey, D, W, H>{
 
