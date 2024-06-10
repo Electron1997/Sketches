@@ -2,3 +2,4 @@ main
 *.csv
 *.DS_Store
 .vscode
+new/documentation
