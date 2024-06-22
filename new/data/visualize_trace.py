@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-trace = "data/retail.csv"
+trace = "retail.csv"
 column_names = ["Timestamp", "Key", "Volume"]
 
 df = pd.read_csv(trace, names=column_names, nrows = 100000)
