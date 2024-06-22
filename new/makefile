@@ -1,6 +1,6 @@
-make:
+all:
 	g++ -o main main.cpp
 
-make opt:
+opt:
 	g++ -O3 -o main main.cpp
 	
