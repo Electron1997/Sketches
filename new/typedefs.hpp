@@ -7,6 +7,8 @@
 typedef uint32_t TKey;
 typedef double TVol;
 
+// TODO: add ZERO, MIN_VAL etc. for TVol
+
 typedef struct{
     TKey key;
     TVol volume;
