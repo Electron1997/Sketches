@@ -68,7 +68,7 @@ void run(sketch<TKey, TVol>& sk, item *buf, size_t n){
     }
 }
 
-std::map<TKey, unsigned> exact_volumes;
+std::map<TKey, TVol> exact_volumes;
 
 void compute_exact_volumes(item *buf, size_t n){
     exact_volumes.clear();
@@ -85,12 +85,31 @@ std::set<TKey>* compute_keyset(item *buf, size_t n){
     return keyset;
 }
 
-TVol absolute_error(const TVol& ground_truth, const TVol& estimate){
-    return fabs(ground_truth - estimate);
+// Inefficient
+template<TVol (*error_statistic)(const std::vector<TVol>&, const std::vector<TVol>&)>
+TVol compute_error_statistic(std::map<TKey, TVol>& exact_volumes, sketch<TKey, TVol>& sketch){
+    size_t n = exact_volumes.size();
+    std::vector<TVol> values(n), estimates(n);
+    size_t i = 0;
+    for(std::pair<TKey, TVol> p : exact_volumes){
+        values[i] = p.second;
+        estimates[i] = sketch.query(p.first);
+        ++i;
+    }
+    return error_statistic(values, estimates);
 }
 
-TVol relative_error(const TVol& ground_truth, const TVol& estimate){
-    return absolute_error(ground_truth, estimate) / fabs(ground_truth);
+// Inefficient
+void print_statistics(sketch<TKey, TVol>& sketch){
+    std::cout << "Mean Absolute " << compute_error_statistic<mean_absolute_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Mean Relative " << compute_error_statistic<mean_relative_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Mean Squared " << compute_error_statistic<mean_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Median Absolute " << compute_error_statistic<median_absolute_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Median Relative " << compute_error_statistic<median_relative_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Median Squared " << compute_error_statistic<median_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Max Absolute " << compute_error_statistic<max_absolute_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Max Relative " << compute_error_statistic<max_relative_error<TVol>>(exact_volumes, sketch) << std::endl;
+    std::cout << "Max Squared " << compute_error_statistic<max_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
 }
 
 /*
@@ -163,16 +182,18 @@ int main(){
     std::cout << "S " << dist.size() << std::endl;
     */
 
-    // Error statistics test
+    /* // Error statistics test
     size_t x; unsigned m; std::cin >> x >> m;
     test(x, m);
     std::cout << "-------------------------------------" << std::endl;
+    */
 
-    // Synthetic trace test
+    /* // Synthetic trace test
     synthetic_trace(generate_item, buf, 0, 100);
     for(size_t i = 0; i < 100; ++i){
         std::cout << buf[i].key << " " << buf[i].volume << std::endl;
     }
+    */
 
     load_trace("data/kosarak.csv");
 
@@ -181,7 +202,8 @@ int main(){
         std::cout << buf[i].key << " " << buf[i].volume << std::endl;
     }
     */
-    size_t n = 8019015;
+    // size_t n = 8019015;
+    size_t n = 1000;
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     compute_exact_volumes(buf, n);
@@ -200,18 +222,22 @@ int main(){
     */
 
     int k = 0;
-    double avg_rel_err_inf = 0.0, avg_rel_err_uninf = 0.0;
-    TVol avg_abs_err_inf = 0.0, avg_abs_err_uninf = 0.0;
 
     std::cout << std::fixed << std::setprecision(10);
     for(auto p : exact_volumes){
         TVol estimate_uninf = cb_uninf.query(p.first);
-        std::cout << "Uninformed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_uninf << " relative error: " << relative_error(p.second, estimate_uninf) * 100 << "%" << std::endl;
+        std::cout << "Uninformed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_uninf << " relative error: " << relative_error<TVol>(p.second, estimate_uninf) * 100 << "%" << std::endl;
         TVol estimate_inf = cb_with_prior.query(p.first);
-        std::cout << "Informed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_inf << " relative error: " << relative_error(p.second, estimate_inf) * 100 << "%" << std::endl;
+        std::cout << "Informed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_inf << " relative error: " << relative_error<TVol>(p.second, estimate_inf) * 100 << "%" << std::endl;
         std::cout << std::endl;
         ++k;
         if(k == 100) break;
     }
+
+    std::cout << "Uninformed" << std::endl;
+    print_statistics(cb_uninf);
+
+    std::cout << std::endl << "With prior" << std::endl;
+    print_statistics(cb_with_prior);
 
 }
