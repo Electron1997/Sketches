@@ -1,3 +1,4 @@
+#include "data/synthetic_trace.hpp"
 #include "hashing/hash.hpp"
 #include "prior_estimation/CB_prior.hpp"
 #include "typedefs.hpp"
@@ -42,24 +43,6 @@ void load_trace(std::string path, item* buf = buf, size_t index = 0, size_t n = 
 	file.close();
 }
 
-// Synthetic trace generation
-#include <random>
-
-std::random_device rd;
-std::mt19937 gen(rd());
-
-inline item generate_item(){
-    std::uniform_int_distribution<TKey> key(1, 5);
-    std::normal_distribution<TVol> volume(0.0, 3.3);
-    return {key(gen), volume(gen)};
-}
-
-void synthetic_trace(item (*synthetic_item)(), item* buf = buf, size_t index = 0, size_t n = BUF_SIZE){
-    for(size_t i = index; i < index + n; ++i){
-        buf[i] = synthetic_item();
-    }
-}
-
 void run(sketch<TKey, TVol>& sk, item *buf, size_t n){
     for(size_t i = 0; i < n; ++i){
         item it = buf[i];
@@ -67,6 +50,7 @@ void run(sketch<TKey, TVol>& sk, item *buf, size_t n){
     }
 }
 
+// TODO: find a better solution for this
 std::map<TKey, TVol> exact_volumes;
 
 void compute_exact_volumes(item *buf, size_t n){
@@ -111,60 +95,7 @@ void print_statistics(sketch<TKey, TVol>& sketch){
     std::cout << "Max Squared " << compute_error_statistic<max_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
 }
 
-#include <chrono>
-#include <random>
-
-// RANDOM NUMBER GENERATOR
-// rng() generates u.a.r. from [0,  RAND_MAX]
-std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
-
-// Error statistics test
-void test(size_t n = 10, unsigned m = 10){
-    std::vector<float> u(n), v(n);
-    for(size_t i = 0; i < n; ++i){
-        u[i] = rng() % m;
-        v[i] = rng() % m;
-    }
-    std::cout << "u ";
-    for(size_t i = 0; i < n; ++i){
-        std::cout << " " << u[i];
-    }
-    std::cout << std::endl;
-    std::cout << "v ";
-    for(size_t i = 0; i < n; ++i){
-        std::cout << " " << v[i];
-    }
-    std::cout << std::endl;
-
-    std::cout << "min u " << min<float>(u) << std::endl;
-    std::cout << "max u " << max<float>(u) << std::endl;
-    std::cout << "mean u " << mean<float>(u) << std::endl;
-    std::cout << "median u " << median<float>(u) << std::endl;
-    std::cout << "mean abs " << mean_absolute_error<float>(u, v) << std::endl;
-    std::cout << "mean rel " << mean_relative_error<float>(u, v) << std::endl;
-    std::cout << "mean sq " << mean_squared_error<float>(u, v) << std::endl;
-    std::cout << "median abs " << median_absolute_error<float>(u, v) << std::endl;
-    std::cout << "median rel " << median_relative_error<float>(u, v) << std::endl;
-    std::cout << "median sq " << median_squared_error<float>(u, v) << std::endl;
-    std::cout << "max abs " << max_absolute_error<float>(u, v) << std::endl;
-    std::cout << "max rel " << max_relative_error<float>(u, v) << std::endl;
-    std::cout << "max sq " << max_squared_error<float>(u, v) << std::endl;
-}
-
 int main(){
-
-    /* // Error statistics test
-    size_t x; unsigned m; std::cin >> x >> m;
-    test(x, m);
-    std::cout << "-------------------------------------" << std::endl;
-    */
-
-    /* // Synthetic trace test
-    synthetic_trace(generate_item, buf, 0, 100);
-    for(size_t i = 0; i < 100; ++i){
-        std::cout << buf[i].key << " " << buf[i].volume << std::endl;
-    }
-    */
 
     load_trace("data/kosarak.csv");
 
