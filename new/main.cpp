@@ -122,15 +122,20 @@ void print_statistics(sketch<TKey, TVol>& sketch){
 
 int main(){
 
-    load_trace("data/kosarak.csv");
+    // size_t n = 8019015;
+    size_t n = 100000;
+
+    // load_trace("data/kosarak.csv");
+    load_synthetic_trace([](){
+                            return uniform_normal_item(0, 10000, 0.0, 1.0);
+                        }, buf, 0, n);
 
     /* 
     for(size_t i = 0; i < 10; ++i){
         std::cout << buf[i].key << " " << buf[i].volume << std::endl;
     }
     */
-    // size_t n = 8019015;
-    size_t n = 10000;
+    
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     run(ccb_uninf, buf, n);
