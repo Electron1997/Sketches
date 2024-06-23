@@ -9,6 +9,8 @@
 #include "sketches/CCB_sketch.hpp"
 #include "statistics/error_statistics.hpp"
 
+#include "tests/error_statistics_test.cpp"
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -83,6 +85,20 @@ TVol compute_error_statistic(std::map<TKey, TVol>& exact_volumes, sketch<TKey, T
 }
 
 // Inefficient
+template<TVol (*error_statistic)(double, const std::vector<TVol>&, const std::vector<TVol>&)>
+TVol compute_percentile_error_statistic(double x, std::map<TKey, TVol>& exact_volumes, sketch<TKey, TVol>& sketch){
+    size_t n = exact_volumes.size();
+    std::vector<TVol> values(n), estimates(n);
+    size_t i = 0;
+    for(std::pair<TKey, TVol> p : exact_volumes){
+        values[i] = p.second;
+        estimates[i] = sketch.query(p.first);
+        ++i;
+    }
+    return error_statistic(x, values, estimates);
+}
+
+// Inefficient
 void print_statistics(sketch<TKey, TVol>& sketch){
     std::cout << "Mean Absolute " << compute_error_statistic<mean_absolute_error<TVol>>(exact_volumes, sketch) << std::endl;
     std::cout << "Mean Relative " << compute_error_statistic<mean_relative_error<TVol>>(exact_volumes, sketch) << std::endl;
@@ -93,6 +109,15 @@ void print_statistics(sketch<TKey, TVol>& sketch){
     std::cout << "Max Absolute " << compute_error_statistic<max_absolute_error<TVol>>(exact_volumes, sketch) << std::endl;
     std::cout << "Max Relative " << compute_error_statistic<max_relative_error<TVol>>(exact_volumes, sketch) << std::endl;
     std::cout << "Max Squared " << compute_error_statistic<max_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Absolute " << compute_percentile_error_statistic<percentile_absolute_error<TVol>>(p, exact_volumes, sketch) << std::endl;
+    }
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Relative " << compute_percentile_error_statistic<percentile_relative_error<TVol>>(p, exact_volumes, sketch) << std::endl;
+    }
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Squared " << compute_percentile_error_statistic<percentile_squared_error<TVol>>(p, exact_volumes, sketch) << std::endl;
+    }
 }
 
 int main(){

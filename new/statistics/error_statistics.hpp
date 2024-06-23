@@ -35,6 +35,9 @@ T median(std::vector<T> values);
 template<typename T>
 T mode(const std::vector<T> values);
 
+template<typename T>
+T percentile(std::vector<T> values);
+
 template<typename T, T (*error)(const T&, const T&)>
 std::vector<T> componentwise_errors(const std::vector<T>& true_values, const std::vector<T>& estimates);
 
@@ -172,6 +175,54 @@ T max_relative_error(const std::vector<T>& true_values, const std::vector<T>& es
  **/
 template<typename T>
 T max_squared_error(const std::vector<T>& true_values, const std::vector<T>& estimates);
+
+/**
+ * Returns the 100p-th percentile componentwise absolute difference between the values in \p true_values and the values in \p estimates .
+ * Formally, this function computes \f$\frac{\sum_{i = 1}^n | u_i - v_i |}{n}\f$. TODO: fix latex.
+ *
+ * @tparam T Type.
+ * 
+ * @param p Percentile.
+ * @param true_values Vector of reference values.
+ * @param estimates Vector of values to compare to reference values.
+ * 
+ * @return 100p-th percentile componentwise absolute error.
+ * 
+ **/
+template<typename T>
+T percentile_absolute_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates);
+
+/**
+ * Returns the 100p-th percentile componentwise relative difference between the values in \p true_values and the values in \p estimates .
+ * Formally, this function computes \f$\frac{\sum_{i = 1}^n | u_i - v_i |}{n}\f$. TODO: fix latex.
+ *
+ * @tparam T Type.
+ * 
+ * @param p Percentile.
+ * @param true_values Vector of reference values.
+ * @param estimates Vector of values to compare to reference values.
+ * 
+ * @return 100p-th percentile componentwise relative error.
+ * 
+ **/
+template<typename T>
+T percentile_relative_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates);
+
+/**
+ * Returns the 100p-th percentile componentwise squared difference between the values in \p true_values and the values in \p estimates .
+ * Formally, this function computes \f$\frac{\sum_{i = 1}^n | u_i - v_i |}{n}\f$. TODO: fix latex.
+ *
+ * @tparam T Type.
+ * 
+ * @param p Percentile.
+ * @param true_values Vector of reference values.
+ * @param estimates Vector of values to compare to reference values.
+ * 
+ * @return 100p-th percentile componentwise squared error.
+ * 
+ **/
+template<typename T>
+T percentile_squared_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates);
 
 #include "error_statistics.tpp"
 

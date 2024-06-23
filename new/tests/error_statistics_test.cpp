@@ -43,3 +43,22 @@ void test(size_t n = 10, unsigned m = 10){
     test(x, m);
     std::cout << "-------------------------------------" << std::endl;
     */
+
+void percentile_test(size_t n = 10, unsigned m = 10){
+    std::vector<float> u(n);
+    for(size_t i = 0; i < n; ++i){
+        u[i] = rng() % m;
+    }
+    sort(u.begin(), u.end());
+    std::cout << "u ";
+    for(size_t i = 0; i < n; ++i){
+        std::cout << " " << u[i];
+    }
+    std::cout << std::endl;
+
+    size_t num_tests; std::cin >> num_tests;
+    for(size_t i = 0; i < num_tests; ++i){
+        double perc; std::cin >> perc;
+        std::cout << percentile<float>(perc, u) << std::endl;
+    }
+}

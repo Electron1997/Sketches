@@ -43,10 +43,22 @@ T mean(std::vector<T> values){
 }
 
 template<typename T>
-T median(std::vector<T> values){
+T percentile(double p, std::vector<T> values){
+    assert(0.0 <= p && p <= 1.0);
     std::sort(values.begin(), values.end());
-    size_t n = values.size(), h = n / 2;
-    return 0.5 * values[n - 1 - h] + 0.5 * values[h];
+    size_t i = 0, n = values.size();
+    double step = 1.0 / (n - 1);
+    while(p >= step){
+        p -= step;
+        ++i;
+    }
+    double w = p / step, eps = 1e-7; // TODO: double check this eps
+    return (1.0 - w) * values[i] + ((w > eps) ? w * values[i + 1] : 0.0);
+}
+
+template<typename T>
+T median(std::vector<T> values){
+    return percentile(0.5, values);
 }
 
 template<typename T>
@@ -106,4 +118,19 @@ T max_relative_error(const std::vector<T>& true_values, const std::vector<T>& es
 template<typename T>
 T max_squared_error(const std::vector<T>& true_values, const std::vector<T>& estimates){
     return max(componentwise_errors<T, squared_error>(true_values, estimates));
+}
+
+template<typename T>
+T percentile_absolute_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates){
+    return percentile(p, componentwise_errors<T, absolute_error>(true_values, estimates));
+}
+
+template<typename T>
+T percentile_relative_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates){
+    return percentile(p, componentwise_errors<T, relative_error>(true_values, estimates));
+}
+
+template<typename T>
+T percentile_squared_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates){
+    return percentile(p, componentwise_errors<T, squared_error>(true_values, estimates));
 }
