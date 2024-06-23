@@ -1,0 +1,53 @@
+100k synthetic uniform_normal_item(0, 10000, 0.0, 1.0), D = W = 30 (inc AMS), H = splitmix, hyperloglog default
+
+CCB Uninformed
+Mean Absolute 8.4458370838
+Mean Relative 36.9444583729
+Mean Squared 112.8126347480
+Median Absolute 7.0820923247
+Median Relative 3.3824723274
+Median Squared 50.1560317154
+Max Absolute 40.7661854114
+Max Relative 99604.0288363525
+Max Squared 1661.8818729989
+0.0000000000th Percentile Absolute 0.0000108057
+25.0000000000th Percentile Absolute 3.3077618715
+50.0000000000th Percentile Absolute 7.0820923247
+75.0000000000th Percentile Absolute 12.2043732902
+100.0000000000th Percentile Absolute 40.7661853732
+0.0000000000th Percentile Relative 0.0000064536
+25.0000000000th Percentile Relative 1.4090488507
+50.0000000000th Percentile Relative 3.3824723274
+75.0000000000th Percentile Relative 8.4075209491
+100.0000000000th Percentile Relative 99604.0287429064
+0.0000000000th Percentile Squared 0.0000000001
+25.0000000000th Percentile Squared 10.9412885996
+50.0000000000th Percentile Squared 50.1560317154
+75.0000000000th Percentile Squared 148.9467275057
+100.0000000000th Percentile Squared 1661.8818714398
+
+CCB With prior
+Mean Absolute 2.4095506163
+Mean Relative 2.4687224656
+Mean Squared 9.3710656069
+Median Absolute 1.9944336868
+Median Relative 0.9687741836
+Median Squared 3.9777657325
+Max Absolute 15.3754648680
+Max Relative 4850.0245739978
+Max Squared 236.4049199072
+0.0000000000th Percentile Absolute 0.0000580392
+25.0000000000th Percentile Absolute 0.9550846920
+50.0000000000th Percentile Absolute 1.9944336868
+75.0000000000th Percentile Absolute 3.4388113936
+100.0000000000th Percentile Absolute 15.3754648536
+0.0000000000th Percentile Relative 0.0001341132
+25.0000000000th Percentile Relative 0.8196617465
+50.0000000000th Percentile Relative 0.9687741836
+75.0000000000th Percentile Relative 1.1505639404
+100.0000000000th Percentile Relative 4850.0245694476
+0.0000000000th Percentile Squared 0.0000000034
+25.0000000000th Percentile Squared 0.9121867690
+50.0000000000th Percentile Squared 3.9777657325
+75.0000000000th Percentile Squared 11.8254238083
+100.0000000000th Percentile Squared 236.4049196854
