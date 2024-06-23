@@ -1,0 +1,53 @@
+First 10k of kosarak, D = W = 30 (inc AMS), H = splitmix, hyperloglog default
+
+CB Uninformed
+Mean Absolute 28.9741575681
+Mean Relative 22.3486677543
+Mean Squared 1311.2546580570
+Median Absolute 25.3793103448
+Median Relative 16.6034482759
+Median Squared 644.1093935791
+Max Absolute 150.3103448276
+Max Relative 150.3103448276
+Max Squared 22593.1997621879
+0.0000000000th Percentile Absolute 0.0000000000
+25.0000000000th Percentile Absolute 11.6896551724
+50.0000000000th Percentile Absolute 25.3793103448
+75.0000000000th Percentile Absolute 41.1120689655
+100.0000000000th Percentile Absolute 150.3103448273
+0.0000000000th Percentile Relative 0.0000000000
+25.0000000000th Percentile Relative 6.1724137931
+50.0000000000th Percentile Relative 16.6034482759
+75.0000000000th Percentile Relative 32.4568965517
+100.0000000000th Percentile Relative 150.3103448273
+0.0000000000th Percentile Squared 0.0000000000
+25.0000000000th Percentile Squared 136.6480380499
+50.0000000000th Percentile Squared 644.1093935791
+75.0000000000th Percentile Squared 1690.2024375741
+100.0000000000th Percentile Squared 22593.1997621153
+
+CB With prior
+Mean Absolute 5.1468306932
+Mean Relative 3.2384311165
+Mean Squared 256.2264421363
+Median Absolute 3.9206219313
+Median Relative 2.4226677578
+Median Squared 15.3712823549
+Max Absolute 586.0000000000
+Max Relative 21.4026186579
+Max Squared 343396.0000000000
+0.0000000000th Percentile Absolute 0.0016366612
+25.0000000000th Percentile Absolute 1.8510638298
+50.0000000000th Percentile Absolute 3.9206219313
+75.0000000000th Percentile Absolute 6.4083469722
+100.0000000000th Percentile Absolute 585.9999999706
+0.0000000000th Percentile Relative 0.0008183306
+25.0000000000th Percentile Relative 1.0136388434
+50.0000000000th Percentile Relative 2.4226677578
+75.0000000000th Percentile Relative 4.6202945990
+100.0000000000th Percentile Relative 21.4026186579
+0.0000000000th Percentile Squared 0.0000026787
+25.0000000000th Percentile Squared 3.4264373019
+50.0000000000th Percentile Squared 15.3712823549
+75.0000000000th Percentile Squared 41.0669289968
+100.0000000000th Percentile Squared 343395.9999696044
