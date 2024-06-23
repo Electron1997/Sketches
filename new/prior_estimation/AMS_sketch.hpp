@@ -1,6 +1,8 @@
 #ifndef AMS_SKETCH_INCLUDED
 #define AMS_SKETCH_INCLUDED
 
+#include <algorithm>
+
 /**
  * Implementation of the AMS Sketch described in https://www.dimacs.rutgers.edu/~graham/pubs/papers/encalgs-ams.pdf.
  *

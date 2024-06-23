@@ -1,6 +1,8 @@
 #include "data/synthetic_trace.hpp"
 #include "hashing/hash.hpp"
+#include "prior_estimation/AMS_sketch.hpp"
 #include "prior_estimation/CB_prior.hpp"
+#include "prior_estimation/CCB_prior.hpp"
 #include "typedefs.hpp"
 #include "sketches/C_sketch.hpp"
 #include "sketches/CM_sketch.hpp"
@@ -8,8 +10,6 @@
 #include "sketches/CCA_sketch.hpp"
 #include "sketches/CCB_sketch.hpp"
 #include "statistics/error_statistics.hpp"
-
-#include "tests/error_statistics_test.cpp"
 
 #include <fstream>
 #include <iomanip>
@@ -27,7 +27,7 @@ item buf[BUF_SIZE];
 // Instantiate sketches
 CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior;
 CCA_sketch<TKey, TVol, D, W, hash> cca;
-CCB_sketch<TKey, TVol, D, W, hash> ccb;
+CCB_sketch<TKey, TVol, D, W, hash> ccb_uninf, ccb_with_prior;
 
 void load_trace(std::string path, item* buf = buf, size_t index = 0, size_t n = BUF_SIZE){
 	std::fstream file; file.open(path, std::ios::in);
@@ -130,9 +130,11 @@ int main(){
     }
     */
     // size_t n = 8019015;
-    size_t n = 1000;
+    size_t n = 10000;
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
+    run(ccb_uninf, buf, n);
+    run(ccb_with_prior, buf, n);
     compute_exact_volumes(buf, n);
 
     hyperloglog_hip::distinct_counter<TKey> l0_estimator;
@@ -140,10 +142,20 @@ int main(){
         l0_estimator.insert(buf[i].key);
     }
 
-    constant_CB_prior(cb_with_prior, l0_estimator);
+    AMS_sketch<TKey, TVol, D, W, hash> l2_estimator;
+    for(size_t i = 0; i < n; ++i){
+        l2_estimator.update(buf[i].key, buf[i].volume);
+    }
 
-    std::cout << cb_uninf.mu << " " << cb_uninf.inv_chi << std::endl;
-    std::cout << cb_with_prior.mu << " " << cb_with_prior.inv_chi << std::endl;
+    constant_CB_prior(cb_with_prior, l0_estimator);
+    constant_CCB_prior(ccb_with_prior, l0_estimator, l2_estimator);
+
+    auto keys = compute_keyset(buf, n);
+    ccb_uninf.compute_cardinality_table(keys);
+    ccb_with_prior.compute_cardinality_table(keys);
+
+    std::cout << ccb_uninf.mu << " " << ccb_uninf.inv_chi << std::endl;
+    std::cout << ccb_with_prior.mu << " " << ccb_with_prior.inv_chi << std::endl;
 
     /* // Print volume table
     for(size_t i = 0; i < 30; ++i){
@@ -158,19 +170,27 @@ int main(){
 
     std::cout << std::fixed << std::setprecision(10);
     for(auto p : exact_volumes){
-        TVol estimate_uninf = cb_uninf.query(p.first);
+        TVol estimate_uninf = ccb_uninf.query(p.first);
         std::cout << "Uninformed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_uninf << " relative error: " << relative_error<TVol>(p.second, estimate_uninf) * 100 << "%" << std::endl;
-        TVol estimate_inf = cb_with_prior.query(p.first);
+        TVol estimate_inf = ccb_with_prior.query(p.first);
         std::cout << "Informed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_inf << " relative error: " << relative_error<TVol>(p.second, estimate_inf) * 100 << "%" << std::endl;
         std::cout << std::endl;
         ++k;
         if(k == 100) break;
     }
 
-    std::cout << "Uninformed" << std::endl;
+    std::cout << "CCB Uninformed" << std::endl;
+    print_statistics(ccb_uninf);
+
+    std::cout << std::endl << "CCB With prior" << std::endl;
+    print_statistics(ccb_with_prior);
+
+    std::cout << "CB Uninformed" << std::endl;
     print_statistics(cb_uninf);
 
-    std::cout << std::endl << "With prior" << std::endl;
+    std::cout << std::endl << "CB With prior" << std::endl;
     print_statistics(cb_with_prior);
+
+
 
 }
