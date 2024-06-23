@@ -24,4 +24,6 @@ inline uint32_t TKey_hash(TKey key){
     return key;
 }
 
+constexpr size_t D = 30, W = 30; // Put this into typedefs/config file
+
 #endif

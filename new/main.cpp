@@ -1,11 +1,12 @@
-#include "accuracy_tests/error_statistics.hpp"
 #include "hashing/hash.hpp"
+#include "prior_estimation/CB_prior.hpp"
 #include "typedefs.hpp"
 #include "sketches/C_sketch.hpp"
 #include "sketches/CM_sketch.hpp"
 #include "sketches/CB_sketch.hpp"
 #include "sketches/CCA_sketch.hpp"
 #include "sketches/CCB_sketch.hpp"
+#include "statistics/error_statistics.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -21,8 +22,6 @@ constexpr size_t BUF_SIZE = 1e7;
 item buf[BUF_SIZE];
 
 // Instantiate sketches
-constexpr size_t D = 30, W = 30; // Put this into typedefs/config file
-
 CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior;
 CCA_sketch<TKey, TVol, D, W, hash> cca;
 CCB_sketch<TKey, TVol, D, W, hash> ccb;
@@ -112,28 +111,12 @@ void print_statistics(sketch<TKey, TVol>& sketch){
     std::cout << "Max Squared " << compute_error_statistic<max_squared_error<TVol>>(exact_volumes, sketch) << std::endl;
 }
 
-/*
-    Hyperloglog test
-*/
-#include "hyperloglog-hip/src/distinct_counter.h"
-
 #include <chrono>
 #include <random>
-
-hyperloglog_hip::distinct_counter<int> h;
 
 // RANDOM NUMBER GENERATOR
 // rng() generates u.a.r. from [0,  RAND_MAX]
 std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
-
-void compute_prior(CB_sketch<TKey, TVol, D, W, hash>& cb, size_t n){
-    hyperloglog_hip::distinct_counter<TKey> l0_estimator;
-    for(size_t i = 0; i < n; ++i){
-        l0_estimator.insert(buf[i].key);
-    }
-    cb.mu = cb.l1 / l0_estimator.count();
-    cb.inv_chi = l0_estimator.count();
-}
 
 // Error statistics test
 void test(size_t n = 10, unsigned m = 10){
@@ -170,18 +153,6 @@ void test(size_t n = 10, unsigned m = 10){
 
 int main(){
 
-    /* // Hyperloglog test
-    size_t n, m; std::cin >> n >> m;
-    std::set<int> dist;
-    for(size_t i = 0; i < m; ++i){
-        int k = rng() % n;
-        h.insert(k);
-        dist.insert(k);
-    }
-    std::cout << "H " << h.count() << std::endl;
-    std::cout << "S " << dist.size() << std::endl;
-    */
-
     /* // Error statistics test
     size_t x; unsigned m; std::cin >> x >> m;
     test(x, m);
@@ -207,7 +178,13 @@ int main(){
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     compute_exact_volumes(buf, n);
-    compute_prior(cb_with_prior, n);
+
+    hyperloglog_hip::distinct_counter<TKey> l0_estimator;
+    for(size_t i = 0; i < n; ++i){
+        l0_estimator.insert(buf[i].key);
+    }
+
+    constant_CB_prior(cb_with_prior, l0_estimator);
 
     std::cout << cb_uninf.mu << " " << cb_uninf.inv_chi << std::endl;
     std::cout << cb_with_prior.mu << " " << cb_with_prior.inv_chi << std::endl;
