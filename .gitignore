@@ -3,3 +3,5 @@ main
 *.DS_Store
 .vscode
 new/documentation
+aggregator.hpp
+aggregator.tpp
