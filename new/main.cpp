@@ -118,6 +118,7 @@ void print_statistics(sketch<TKey, TVol>& sketch){
     for(double p = 0.0; p <= 1.05; p += 0.25){
         std::cout << p * 100 << "th Percentile Squared " << compute_percentile_error_statistic<percentile_squared_error<TVol>>(p, exact_volumes, sketch) << std::endl;
     }
+    std::cout << "Pearson Correlation " << compute_error_statistic<pearson_correlation<TVol>>(exact_volumes, sketch) << std::endl;
 }
 
 int main(){

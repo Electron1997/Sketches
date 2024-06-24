@@ -1,3 +1,8 @@
+/**
+ * @file error_statistics.hpp
+ * @brief Error statistics.
+ */
+
 #ifndef ERROR_STATISTICS_INCLUDED
 #define ERROR_STATISTICS_INCLUDED
 
@@ -17,7 +22,10 @@ template<typename T>
 T relative_error(const T& true_value, const T& estimate);
 
 template<typename T>
-T squared_error(const T& true_value, const T& estimate);
+T sum(const std::vector<T> values);
+
+template<typename T>
+T sum_of_squares(const std::vector<T> values);
 
 // TODO: avoid copying vector
 template<typename T>
@@ -222,7 +230,22 @@ T percentile_relative_error(double p, const std::vector<T>& true_values, const s
  * 
  **/
 template<typename T>
-T percentile_squared_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates);
+T percentile_squared_error(const std::vector<T>& true_values, const std::vector<T>& estimates);
+
+/**
+ * Returns the Pearson correlation coefficient between the values in \p true_values and the values in \p estimates .
+ * Formally, this function computes \f$\frac{\sum_{i = 1}^n | u_i - v_i |}{n}\f$. TODO: fix latex.
+ *
+ * @tparam T Type.
+ * 
+ * @param true_values Vector of reference values.
+ * @param estimates Vector of values to compare to reference values.
+ * 
+ * @return 100p-th percentile componentwise squared error.
+ * 
+ **/
+template<typename T>
+T pearson_correlation(const std::vector<T>& true_values, const std::vector<T>& estimates);
 
 #include "error_statistics.tpp"
 

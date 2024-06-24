@@ -15,6 +15,24 @@ T squared_error(const T& true_value, const T& estimate){
 }
 
 template<typename T>
+T sum(const std::vector<T> values){
+    T s = 0;
+    for(auto v : values){
+        s = s + v;
+    }
+    return s;
+}
+
+template<typename T>
+T sum_of_squares(const std::vector<T> values){
+    T s = 0;
+    for(auto v : values){
+        s = s + v * v;
+    }
+    return s;
+}
+
+template<typename T>
 T max(const std::vector<T> values){
     T mx = 0;   // TODO: make more general
     for(size_t i = 0; i < values.size(); ++i){
@@ -37,7 +55,7 @@ T mean(std::vector<T> values){
     std::sort(values.begin(), values.end());
     T m = 0; size_t n = values.size();
     for(size_t i = 0; i < n; ++i){
-        m += values[i] / n;
+        m = m + values[i] / n;
     }
     return m;
 }
@@ -133,4 +151,23 @@ T percentile_relative_error(double p, const std::vector<T>& true_values, const s
 template<typename T>
 T percentile_squared_error(double p, const std::vector<T>& true_values, const std::vector<T>& estimates){
     return percentile(p, componentwise_errors<T, squared_error>(true_values, estimates));
+}
+
+template<typename T>
+T pearson_correlation(const std::vector<T>& true_values, const std::vector<T>& estimates){
+    size_t n = true_values.size();
+    T mean_true_value = mean(true_values), mean_estimate = mean(estimates);
+    std::vector<T> centered_true_values(n), centered_estimates(n);
+    for(size_t i = 0; i < n; ++i){
+        centered_true_values[i] = true_values[i] - mean_true_value;
+    }
+    for(size_t i = 0; i < n; ++i){
+        centered_estimates[i] = estimates[i] - mean_estimate;
+    }
+    T den = sqrt(sum_of_squares(centered_true_values)) * sqrt(sum_of_squares(centered_estimates));
+    T pcc = 0;
+    for(size_t i = 0; i < n; ++i){
+        pcc = pcc + centered_true_values[i] / den * centered_estimates[i];
+    }
+    return pcc;
 }
