@@ -25,7 +25,7 @@ constexpr size_t BUF_SIZE = 1e7;
 item buf[BUF_SIZE];
 
 // Instantiate sketches
-CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior;
+CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior, cb_unbiased_prior;
 CCA_sketch<TKey, TVol, D, W, hash> cca;
 CCB_sketch<TKey, TVol, D, W, hash> ccb_uninf, ccb_with_prior;
 
@@ -126,10 +126,10 @@ int main(){
     // size_t n = 8019015;
     size_t n = 100000;
 
-    // load_trace("data/kosarak.csv");
-    load_synthetic_trace([](){
+    load_trace("data/kosarak.csv");
+    /* load_synthetic_trace([](){
                             return uniform_normal_item(0, 10000, 0.0, 1.0);
-                        }, buf, 0, n);
+                        }, buf, 0, n); */
 
     /* 
     for(size_t i = 0; i < 10; ++i){
@@ -139,6 +139,7 @@ int main(){
     
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
+    run(cb_unbiased_prior, buf, n);
     run(ccb_uninf, buf, n);
     run(ccb_with_prior, buf, n);
     compute_exact_volumes(buf, n);
@@ -154,14 +155,19 @@ int main(){
     }
 
     constant_CB_prior(cb_with_prior, l0_estimator);
+    unbiased_constant_CB_prior(cb_unbiased_prior, l0_estimator, l2_estimator);
     constant_CCB_prior(ccb_with_prior, l0_estimator, l2_estimator);
 
     auto keys = compute_keyset(buf, n);
     ccb_uninf.compute_cardinality_table(keys);
     ccb_with_prior.compute_cardinality_table(keys);
 
-    std::cout << ccb_uninf.mu << " " << ccb_uninf.inv_chi << std::endl;
-    std::cout << ccb_with_prior.mu << " " << ccb_with_prior.inv_chi << std::endl;
+    std::cout << "CB uninf " << cb_uninf.mu << " " << cb_uninf.inv_chi << std::endl;
+    std::cout << "CB const prior " << cb_with_prior.mu << " " << cb_with_prior.inv_chi << std::endl;
+    std::cout << "CB unbiased prior " << cb_unbiased_prior.mu << " " << cb_unbiased_prior.inv_chi << std::endl;
+
+    std::cout << "CCB uninf " << ccb_uninf.mu << " " << ccb_uninf.inv_chi << std::endl;
+    std::cout << "CCB const prior " << ccb_with_prior.mu << " " << ccb_with_prior.inv_chi << std::endl;
 
     /* // Print volume table
     for(size_t i = 0; i < 30; ++i){
@@ -196,6 +202,11 @@ int main(){
 
     std::cout << std::endl << "CB With prior" << std::endl;
     print_statistics(cb_with_prior);
+
+    std::cout << std::endl << "CB Unbiased prior" << std::endl;
+    print_statistics(cb_unbiased_prior);
+
+
 
 
 
