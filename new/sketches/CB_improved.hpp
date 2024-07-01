@@ -1,8 +1,8 @@
 #ifndef CB_IMPROVED_INCLUDED
 #define CB_IMPROVED_INCLUDED
 
-#include "prior_estimation/AMS_sketch.hpp"
-#include "prior_estimation/hyperloglog-hip/src/distinct_counter.h"
+#include "../prior_estimation/AMS_sketch.hpp"
+#include "../prior_estimation/hyperloglog-hip/src/distinct_counter.h"
 #include "sketch_interface.hpp"
 #include "volume_table.hpp"
 
@@ -22,7 +22,7 @@ struct CB_improved : public sketch<TKey, TVol>, public volume_table<TKey, TVol, 
     // TVol l1 = 0, V[D][W] = {0}; // Total volume, volume table
     // TVol mu = 0.0, chi = std::numeric_limits<TVol>::infinity(); // Prior
 
-    hyperhyperloglog_hip::distinct_counter<TKey>& l0_estimator;
+    hyperloglog_hip::distinct_counter<TKey> l0_estimator;
     AMS_sketch<TKey, TVol, D, W, H> l2_estimator;
 
     void update(TKey key, TVol volume);

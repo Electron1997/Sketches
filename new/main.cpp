@@ -6,6 +6,7 @@
 #include "typedefs.hpp"
 #include "sketches/C_sketch.hpp"
 #include "sketches/CM_sketch.hpp"
+#include "sketches/CB_improved.hpp"
 #include "sketches/CB_sketch.hpp"
 #include "sketches/CCA_sketch.hpp"
 #include "sketches/CCB_sketch.hpp"
@@ -26,6 +27,7 @@ item buf[BUF_SIZE];
 
 // Instantiate sketches
 CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior, cb_unbiased_prior;
+CB_improved<TKey, TVol, D, W, hash> cb_imp;
 CCA_sketch<TKey, TVol, D, W, hash> cca;
 CCB_sketch<TKey, TVol, D, W, hash> ccb_uninf, ccb_with_prior;
 
@@ -140,6 +142,7 @@ int main(){
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     run(cb_unbiased_prior, buf, n);
+    run(cb_imp, buf, n);
     run(ccb_uninf, buf, n);
     run(ccb_with_prior, buf, n);
     compute_exact_volumes(buf, n);
@@ -181,6 +184,7 @@ int main(){
     int k = 0;
 
     std::cout << std::fixed << std::setprecision(10);
+    /*
     for(auto p : exact_volumes){
         TVol estimate_uninf = ccb_uninf.query(p.first);
         std::cout << "Uninformed Item " << p.first << " exact: " << p.second << " estimate: " << estimate_uninf << " relative error: " << relative_error<TVol>(p.second, estimate_uninf) * 100 << "%" << std::endl;
@@ -190,6 +194,7 @@ int main(){
         ++k;
         if(k == 100) break;
     }
+    */
 
     std::cout << "CCB Uninformed" << std::endl;
     print_statistics(ccb_uninf);
@@ -206,7 +211,8 @@ int main(){
     std::cout << std::endl << "CB Unbiased prior" << std::endl;
     print_statistics(cb_unbiased_prior);
 
-
+    std::cout << std::endl << "CB Improved" << std::endl;
+    print_statistics(cb_imp);
 
 
 

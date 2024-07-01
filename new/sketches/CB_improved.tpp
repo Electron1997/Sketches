@@ -14,8 +14,8 @@ TVol CB_improved<TKey, TVol, D, W, H>::query(TKey key){
     }
     TVol old_num = prior<TVol>::mu * prior<TVol>::inv_chi + W * s - D * volume_table<TKey, TVol, D, W, H>::l1;
     TVol old_den = prior<TVol>::inv_chi + D * (W - 1);
-    TVol old_estimate = num / den;
-    TVol l0_estimate = l0_estimator.count(), l2_estimate = l2_estimator.query(), var_estimate = l2_estimate / l0_estimate;
+    TVol old_estimate = old_num / old_den;
+    TVol l0_estimate = l0_estimator.count(), l2_estimate = l2_estimator.l2_estimate(), var_estimate = l2_estimate / l0_estimate;
     TVol inv_chi = l0_estimate - old_estimate * old_estimate / var_estimate;
     TVol num = prior<TVol>::mu * inv_chi + W * s - D * volume_table<TKey, TVol, D, W, H>::l1;
     TVol den = inv_chi + D * (W - 1);
