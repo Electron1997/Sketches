@@ -10,6 +10,7 @@
 #include "sketches/CB_sketch.hpp"
 #include "sketches/CCA_sketch.hpp"
 #include "sketches/CCB_sketch.hpp"
+#include "sketches/CCB_improved.hpp"
 #include "statistics/error_statistics.hpp"
 
 #include <fstream>
@@ -30,6 +31,7 @@ CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior, cb_unbiased_prior;
 CB_improved<TKey, TVol, D, W, hash> cb_imp;
 CCA_sketch<TKey, TVol, D, W, hash> cca;
 CCB_sketch<TKey, TVol, D, W, hash> ccb_uninf, ccb_with_prior;
+CCB_improved<TKey, TVol, D, W, hash> ccb_imp;
 
 void load_trace(std::string path, item* buf = buf, size_t index = 0, size_t n = BUF_SIZE){
 	std::fstream file; file.open(path, std::ios::in);
@@ -86,6 +88,11 @@ TVol compute_error_statistic(std::map<TKey, TVol>& exact_volumes, sketch<TKey, T
     return error_statistic(values, estimates);
 }
 
+template<TVol (*error_statistic)(const std::vector<TVol>&, const std::vector<TVol>&)>
+TVol compare_error_statistic(std::map<TKey, TVol>& exact_volumes, sketch<TKey, TVol>& sketch1, sketch<TKey, TVol>& sketch2){
+    return compute_error_statistic<error_statistic>(exact_volumes, sketch1) - compute_error_statistic<error_statistic>(exact_volumes, sketch2);
+}
+
 // Inefficient
 template<TVol (*error_statistic)(double, const std::vector<TVol>&, const std::vector<TVol>&)>
 TVol compute_percentile_error_statistic(double x, std::map<TKey, TVol>& exact_volumes, sketch<TKey, TVol>& sketch){
@@ -98,6 +105,11 @@ TVol compute_percentile_error_statistic(double x, std::map<TKey, TVol>& exact_vo
         ++i;
     }
     return error_statistic(x, values, estimates);
+}
+
+template<TVol (*error_statistic)(double, const std::vector<TVol>&, const std::vector<TVol>&)>
+TVol compare_percentile_error_statistic(double x, std::map<TKey, TVol>& exact_volumes, sketch<TKey, TVol>& sketch1, sketch<TKey, TVol>& sketch2){
+    return compute_percentile_error_statistic<error_statistic>(x, exact_volumes, sketch1) - compute_percentile_error_statistic<error_statistic>(x, exact_volumes, sketch2);
 }
 
 // Inefficient
@@ -123,6 +135,28 @@ void print_statistics(sketch<TKey, TVol>& sketch){
     std::cout << "Pearson Correlation " << compute_error_statistic<pearson_correlation<TVol>>(exact_volumes, sketch) << std::endl;
 }
 
+void print_statistics_comparison(sketch<TKey, TVol>& sketch1, sketch<TKey, TVol>& sketch2){
+    std::cout << "Mean Absolute " << compare_error_statistic<mean_absolute_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Mean Relative " << compare_error_statistic<mean_relative_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Mean Squared " << compare_error_statistic<mean_squared_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Median Absolute " << compare_error_statistic<median_absolute_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Median Relative " << compare_error_statistic<median_relative_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Median Squared " << compare_error_statistic<median_squared_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Max Absolute " << compare_error_statistic<max_absolute_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Max Relative " << compare_error_statistic<max_relative_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    std::cout << "Max Squared " << compare_error_statistic<max_squared_error<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Absolute " << compare_percentile_error_statistic<percentile_absolute_error<TVol>>(p, exact_volumes, sketch1, sketch2) << std::endl;
+    }
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Relative " << compare_percentile_error_statistic<percentile_relative_error<TVol>>(p, exact_volumes, sketch1, sketch2) << std::endl;
+    }
+    for(double p = 0.0; p <= 1.05; p += 0.25){
+        std::cout << p * 100 << "th Percentile Squared " << compare_percentile_error_statistic<percentile_squared_error<TVol>>(p, exact_volumes, sketch1, sketch2) << std::endl;
+    }
+    std::cout << "Pearson Correlation " << compare_error_statistic<pearson_correlation<TVol>>(exact_volumes, sketch1, sketch2) << std::endl;
+}
+
 int main(){
 
     // size_t n = 8019015;
@@ -145,6 +179,7 @@ int main(){
     run(cb_imp, buf, n);
     run(ccb_uninf, buf, n);
     run(ccb_with_prior, buf, n);
+    run(ccb_imp, buf, n);
     compute_exact_volumes(buf, n);
 
     hyperloglog_hip::distinct_counter<TKey> l0_estimator;
@@ -160,6 +195,8 @@ int main(){
     constant_CB_prior(cb_with_prior, l0_estimator);
     unbiased_constant_CB_prior(cb_unbiased_prior, l0_estimator, l2_estimator);
     constant_CCB_prior(ccb_with_prior, l0_estimator, l2_estimator);
+    unbiased_constant_CB_prior(cb_imp, l0_estimator, l2_estimator);
+    constant_CCB_prior(ccb_imp, l0_estimator, l2_estimator);
 
     auto keys = compute_keyset(buf, n);
     ccb_uninf.compute_cardinality_table(keys);
@@ -214,6 +251,6 @@ int main(){
     std::cout << std::endl << "CB Improved" << std::endl;
     print_statistics(cb_imp);
 
-
+    print_statistics_comparison(cb_with_prior, cb_imp);
 
 }
