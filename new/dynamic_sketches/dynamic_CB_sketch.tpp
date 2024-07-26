@@ -9,11 +9,11 @@ inline void dynamic_CB_sketch<TKey, TVol, H>::update(TKey key, TVol volume){
 template<typename TKey, typename TVol, uint32_t (*H)(const TKey&, const size_t&)>
 TVol dynamic_CB_sketch<TKey, TVol, H>::query(TKey key){
     TVol s = 0.0;
-    for(size_t d = 0; d < D; ++d){
-        size_t j = H(key, d) % W;
+    for(size_t d = 0; d < dynamic_volume_table<TKey, TVol, H>::D; ++d){
+        size_t j = H(key, d) % dynamic_volume_table<TKey, TVol, H>::W;
         s = s + dynamic_volume_table<TKey, TVol, H>::V[d][j];
     }
-    TVol num = prior<TVol>::mu * prior<TVol>::inv_chi + W * s - D * dynamic_volume_table<TKey, TVol, H>::l1;
-    TVol den = prior<TVol>::inv_chi + D * (W - 1);
+    TVol num = prior<TVol>::mu * prior<TVol>::inv_chi + dynamic_volume_table<TKey, TVol, H>::W * s - dynamic_volume_table<TKey, TVol, H>::D * dynamic_volume_table<TKey, TVol, H>::l1;
+    TVol den = prior<TVol>::inv_chi + dynamic_volume_table<TKey, TVol, H>::D * (dynamic_volume_table<TKey, TVol, H>::W - 1);
     return num / den;
 }

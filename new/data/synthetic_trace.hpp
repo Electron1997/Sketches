@@ -1,6 +1,4 @@
 // Synthetic trace generation
-#include "../typedefs.hpp"
-
 #include <random>
 
 std::random_device rd;

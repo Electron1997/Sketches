@@ -1,10 +1,10 @@
 #include "AMS_sketch.hpp"
 #include "../sketches/CCB_sketch.hpp"
 #include "hyperloglog-hip/src/distinct_counter.h"
-#include "../typedefs.hpp"
 
 // Ignoring alpha
-void constant_CCB_prior(CCB_sketch<TKey, TVol, D, W, hash>& ccb, hyperloglog_hip::distinct_counter<TKey>& l0_estimator, AMS_sketch<TKey, TVol, D, W, hash>& l2_estimator){
+template<typename TKey, typename TVol, size_t D, size_t W, uint32_t (*H)(const TKey&, const size_t&)>
+void constant_CCB_prior(CCB_sketch<TKey, TVol, D, W, H>& ccb, hyperloglog_hip::distinct_counter<TKey>& l0_estimator, AMS_sketch<TKey, TVol, D, W, H>& l2_estimator){
     TVol l0_estimate = l0_estimator.count();
     TVol l2_estimate = l2_estimator.l2_estimate(), var_estimate = l2_estimate / l0_estimate;    // var: sigma squared
     ccb.mu = ccb.l1 / l0_estimate;
@@ -13,7 +13,8 @@ void constant_CCB_prior(CCB_sketch<TKey, TVol, D, W, hash>& ccb, hyperloglog_hip
 
 // Using alpha = mu
 // TODO: check for numerical issues and simplifications
-void unbiased_constant_CCB_prior(CCB_sketch<TKey, TVol, D, W, hash>& ccb, hyperloglog_hip::distinct_counter<TKey>& l0_estimator, AMS_sketch<TKey, TVol, D, W, hash>& l2_estimator){
+template<typename TKey, typename TVol, size_t D, size_t W, uint32_t (*H)(const TKey&, const size_t&)>
+void unbiased_constant_CCB_prior(CCB_sketch<TKey, TVol, D, W, H>& ccb, hyperloglog_hip::distinct_counter<TKey>& l0_estimator, AMS_sketch<TKey, TVol, D, W, H>& l2_estimator){
     TVol l0_estimate = l0_estimator.count();
     TVol l2_estimate = l2_estimator.l2_estimate(), var_estimate = l2_estimate / l0_estimate;    // var: sigma squared
     ccb.mu = ccb.l1 / l0_estimate;

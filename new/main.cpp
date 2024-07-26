@@ -1,14 +1,17 @@
-#include "data/synthetic_trace.hpp"
+// #include "data/synthetic_trace.hpp"
+#include "dynamic_sketches/dynamic_CB_sketch.hpp"
+#include "dynamic_sketches/dynamic_CCB_sketch.hpp"
 #include "hashing/hash.hpp"
 #include "prior_estimation/AMS_sketch.hpp"
 #include "prior_estimation/CB_prior.hpp"
 #include "prior_estimation/CCB_prior.hpp"
-#include "typedefs.hpp"
 #include "sketches/C_sketch.hpp"
 #include "sketches/CM_sketch.hpp"
+#include "sketches/CB_bootstrapCM.hpp"
 #include "sketches/CB_improved.hpp"
 #include "sketches/CB_sketch.hpp"
 #include "sketches/CCA_sketch.hpp"
+#include "sketches/CCB_bootstrapCM.hpp"
 #include "sketches/CCB_sketch.hpp"
 #include "sketches/CCB_improved.hpp"
 #include "statistics/error_statistics.hpp"
@@ -21,17 +24,47 @@
 #include <set>
 #include <sstream>
 
+// TYPEDEFS
+#include <cstdint>
+#include <string>
+
+typedef uint32_t TKey;
+typedef float TVol;
+
+// TODO: add ZERO, MIN_VAL etc. for TVol
+
+typedef struct{
+    TKey key;
+    TVol volume;
+} item;
+
+inline TKey to_TKey(const std::string& s){
+    return std::stoi(s);
+}
+
+inline TVol to_TVol(const std::string& s){
+    return std::stod(s);
+}
+
+inline uint32_t TKey_hash(TKey key){
+    return key;
+}
+
+constexpr size_t D = 30, W = 30; // Put this into typedefs/config file
+
 // STREAM PROCESSING
 constexpr size_t BUF_SIZE = 1e7;
 
 item buf[BUF_SIZE];
 
-// Instantiate sketches
-CB_sketch<TKey, TVol, D, W, hash> cb_uninf, cb_with_prior, cb_unbiased_prior;
-CB_improved<TKey, TVol, D, W, hash> cb_imp;
-CCA_sketch<TKey, TVol, D, W, hash> cca;
-CCB_sketch<TKey, TVol, D, W, hash> ccb_uninf, ccb_with_prior;
-CCB_improved<TKey, TVol, D, W, hash> ccb_imp;
+// Instantiate static sketches
+CB_sketch<TKey, TVol, D, W, hash32> cb_uninf, cb_with_prior, cb_unbiased_prior;
+CB_improved<TKey, TVol, D, W, hash32> cb_imp;
+CB_bootstrapCM<TKey, TVol, D, W, hash32> cb_cm;
+CCA_sketch<TKey, TVol, D, W, hash32> cca;
+CCB_sketch<TKey, TVol, D, W, hash32> ccb_uninf, ccb_with_prior, ccb_unbiased_prior;
+CCB_improved<TKey, TVol, D, W, hash32> ccb_imp;
+CCB_bootstrapCM<TKey, TVol, D, W, hash32> ccb_cm;
 
 void load_trace(std::string path, item* buf = buf, size_t index = 0, size_t n = BUF_SIZE){
 	std::fstream file; file.open(path, std::ios::in);
@@ -172,14 +205,25 @@ int main(){
         std::cout << buf[i].key << " " << buf[i].volume << std::endl;
     }
     */
+
+    // Instantiate dynamic sketches
+    dynamic_CB_sketch<TKey, TVol, hash32> cb_dyn(D, W);
+    dynamic_CCB_sketch<TKey, TVol, hash32> ccb_dyn(D, W);
     
+    // Run sketches
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     run(cb_unbiased_prior, buf, n);
     run(cb_imp, buf, n);
+    run(cb_cm, buf, n);
+    run(cb_dyn, buf, n);
     run(ccb_uninf, buf, n);
     run(ccb_with_prior, buf, n);
+    run(ccb_unbiased_prior, buf, n);
     run(ccb_imp, buf, n);
+    run(ccb_cm, buf, n);
+    run(ccb_dyn, buf, n);
+
     compute_exact_volumes(buf, n);
 
     hyperloglog_hip::distinct_counter<TKey> l0_estimator;
@@ -187,27 +231,43 @@ int main(){
         l0_estimator.insert(buf[i].key);
     }
 
-    AMS_sketch<TKey, TVol, D, W, hash> l2_estimator;
+    AMS_sketch<TKey, TVol, D, W, hash32> l2_estimator;
     for(size_t i = 0; i < n; ++i){
         l2_estimator.update(buf[i].key, buf[i].volume);
     }
 
     constant_CB_prior(cb_with_prior, l0_estimator);
     unbiased_constant_CB_prior(cb_unbiased_prior, l0_estimator, l2_estimator);
-    constant_CCB_prior(ccb_with_prior, l0_estimator, l2_estimator);
     unbiased_constant_CB_prior(cb_imp, l0_estimator, l2_estimator);
-    constant_CCB_prior(ccb_imp, l0_estimator, l2_estimator);
+    unbiased_constant_CB_prior(cb_cm, l0_estimator, l2_estimator);
+    cb_dyn.mu = cb_unbiased_prior.mu;
+    cb_dyn.inv_chi = cb_unbiased_prior.inv_chi;
+
+    constant_CCB_prior(ccb_with_prior, l0_estimator, l2_estimator);
+    unbiased_constant_CCB_prior(ccb_unbiased_prior, l0_estimator, l2_estimator);
+    unbiased_constant_CCB_prior(ccb_imp, l0_estimator, l2_estimator);
+    unbiased_constant_CCB_prior(ccb_cm, l0_estimator, l2_estimator);
+    ccb_dyn.mu = ccb_unbiased_prior.mu;
+    ccb_dyn.inv_chi = ccb_unbiased_prior.inv_chi;
 
     auto keys = compute_keyset(buf, n);
     ccb_uninf.compute_cardinality_table(keys);
     ccb_with_prior.compute_cardinality_table(keys);
+    ccb_unbiased_prior.compute_cardinality_table(keys);
+    ccb_imp.compute_cardinality_table(keys);
+    ccb_cm.compute_cardinality_table(keys);
+    ccb_dyn.compute_cardinality_table(keys);
 
+    /*  // Print priors
     std::cout << "CB uninf " << cb_uninf.mu << " " << cb_uninf.inv_chi << std::endl;
     std::cout << "CB const prior " << cb_with_prior.mu << " " << cb_with_prior.inv_chi << std::endl;
     std::cout << "CB unbiased prior " << cb_unbiased_prior.mu << " " << cb_unbiased_prior.inv_chi << std::endl;
 
     std::cout << "CCB uninf " << ccb_uninf.mu << " " << ccb_uninf.inv_chi << std::endl;
     std::cout << "CCB const prior " << ccb_with_prior.mu << " " << ccb_with_prior.inv_chi << std::endl;
+    std::cout << "CCB unbiased prior " << ccb_unbiased_prior.mu << " " << ccb_unbiased_prior.inv_chi << std::endl;
+    std::cout << "CCB improved " << ccb_imp.mu << " " << ccb_imp.inv_chi << std::endl;
+    */
 
     /* // Print volume table
     for(size_t i = 0; i < 30; ++i){
@@ -233,12 +293,7 @@ int main(){
     }
     */
 
-    std::cout << "CCB Uninformed" << std::endl;
-    print_statistics(ccb_uninf);
-
-    std::cout << std::endl << "CCB With prior" << std::endl;
-    print_statistics(ccb_with_prior);
-
+    /*
     std::cout << "CB Uninformed" << std::endl;
     print_statistics(cb_uninf);
 
@@ -252,5 +307,25 @@ int main(){
     print_statistics(cb_imp);
 
     print_statistics_comparison(cb_with_prior, cb_imp);
+    */
+
+    std::cout << "CCB Uninformed" << std::endl;
+    print_statistics(ccb_uninf);
+
+    std::cout << std::endl << "CCB With prior" << std::endl;
+    print_statistics(ccb_with_prior);
+
+    std::cout << std::endl << "CCB unbiased prior" << std::endl;
+    print_statistics(ccb_unbiased_prior);
+
+    std::cout << std::endl << "CCB improved" << std::endl;
+    print_statistics(ccb_imp);
+
+    std::cout << std::endl << "CCB CM" << std::endl;
+    print_statistics(ccb_cm);
+
+    std::cout << std::endl << "Comparison" << std::endl;
+    print_statistics_comparison(ccb_imp, ccb_cm);
+
 
 }

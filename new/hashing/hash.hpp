@@ -1,8 +1,6 @@
 #ifndef HASH_INCLUDED
 #define HASH_INCLUDED
 
-#include "../typedefs.hpp"
-
 #include <cstdint>
 #include <iostream>
 
@@ -31,8 +29,14 @@ inline uint64_t splitmix64(uint64_t x) {
     return x ^ (x >> 31);
 }
 
-inline uint32_t hash(const TKey& k, const size_t& i){
-    return splitmix64((i << 32) | TKey_hash(k));
-};
+inline uint32_t hash32(const uint32_t& k, const size_t& i){
+    return splitmix64((i << 32) | k);
+}
+
+inline uint32_t hash64(const uint64_t& k, const size_t& i){
+    uint64_t h = splitmix64(k);
+    uint32_t upper = h >> 32, lower = h;
+    return splitmix64((i << 32) | (upper ^ lower));
+}
 
 #endif
