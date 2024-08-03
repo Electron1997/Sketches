@@ -2,6 +2,6 @@ main
 *.csv
 *.DS_Store
 .vscode
-new/documentation
+new/sketches/documentation
 aggregator.hpp
 aggregator.tpp
