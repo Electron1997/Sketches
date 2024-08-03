@@ -5,13 +5,15 @@ inline void CCB_improved<TKey, TVol, D, W, H>::update(TKey key, TVol volume){
     l2_estimator.update(key, volume);
 }
 
-// TODO: optimize
+// TODO: optimize, check for cancellation
 
 template<typename TKey, typename TVol, size_t D, size_t W, uint32_t (*H)(const TKey&, const size_t&)>
 TVol CCB_improved<TKey, TVol, D, W, H>::query(TKey key){
     TVol old_estimate = CCB_sketch<TKey, TVol, D, W, H>::query(key);
     TVol l0_estimate = l0_estimator.count(), l2_estimate = l2_estimator.l2_estimate(), var_estimate = l2_estimate / l0_estimate;
-    TVol inv_chi = l0_estimate - old_estimate * old_estimate / var_estimate;
+    TVol first_term = (l0_estimate - 1) * (l2_estimate - old_estimate * old_estimate) / var_estimate / (l0_estimate - 2);
+    TVol secdond_term = (volume_table<TKey, TVol, D, W, H>::l1 - old_estimate) * (volume_table<TKey, TVol, D, W, H>::l1 - old_estimate) / var_estimate / (l0_estimate - 2);
+    TVol inv_chi = first_term - secdond_term;
     TVol s_num = 0.0, s_den = 0.0;
     for(size_t d = 0; d < D; ++d){
         size_t w = H(key, d) % W;
@@ -25,7 +27,7 @@ TVol CCB_improved<TKey, TVol, D, W, H>::query(TKey key){
         s_num = s_num + V_entry / (C_entry - 1);
         s_den = s_den + (cardinality_table<TKey, D, W, H>::l0 - C_entry) / (C_entry - 1);
     }
-    TVol num = prior<TVol>::mu * prior<TVol>::inv_chi + (cardinality_table<TKey, D, W, H>::l0 - 1) * s_num - D * volume_table<TKey, TVol, D, W, H>::l1;
-    TVol den = prior<TVol>::inv_chi + s_den;
+    TVol num = prior<TVol>::mu * inv_chi + (cardinality_table<TKey, D, W, H>::l0 - 1) * s_num - D * volume_table<TKey, TVol, D, W, H>::l1;
+    TVol den = inv_chi + s_den;
     return num / den;
 }
