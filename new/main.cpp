@@ -8,6 +8,7 @@
 #include "sketches/C_sketch.hpp"
 #include "sketches/CM_sketch.hpp"
 #include "sketches/CB_bootstrapCM.hpp"
+#include "sketches/CB_bootstrapCM_noAMS.hpp"
 #include "sketches/CB_improved.hpp"
 #include "sketches/CB_sketch.hpp"
 #include "sketches/CCA_sketch.hpp"
@@ -50,17 +51,19 @@ inline uint32_t TKey_hash(TKey key){
     return key;
 }
 
-constexpr size_t D = 30, W = 30; // Put this into typedefs/config file
+constexpr size_t D = 30, W = 30; 
 
 // STREAM PROCESSING
-constexpr size_t BUF_SIZE = 1e7;
+constexpr size_t BUF_SIZE = 1e6;
 
 item buf[BUF_SIZE];
 
 // Instantiate static sketches
+CM_sketch<TKey, TVol, D, W, hash32> cm;
+C_sketch<TKey, TVol, D, W, hash32> c;
 CB_sketch<TKey, TVol, D, W, hash32> cb_uninf, cb_with_prior, cb_unbiased_prior;
 CB_improved<TKey, TVol, D, W, hash32> cb_imp;
-CB_bootstrapCM<TKey, TVol, D, W, hash32> cb_cm;
+CB_bootstrapCM_noAMS<TKey, TVol, D, W, hash32> cb_cm;
 CCA_sketch<TKey, TVol, D, W, hash32> cca;
 CCB_sketch<TKey, TVol, D, W, hash32> ccb_uninf, ccb_with_prior, ccb_unbiased_prior;
 CCB_improved<TKey, TVol, D, W, hash32> ccb_imp;
@@ -193,7 +196,7 @@ void print_statistics_comparison(sketch<TKey, TVol>& sketch1, sketch<TKey, TVol>
 int main(){
 
     // size_t n = 8019015;
-    size_t n = 100000;
+    size_t n = 1e6;
 
     load_trace("data/kosarak.csv");
     /* load_synthetic_trace([](){
@@ -211,6 +214,8 @@ int main(){
     dynamic_CCB_sketch<TKey, TVol, hash32> ccb_dyn(D, W);
     
     // Run sketches
+    run(c, buf, n);
+    run(cm, buf, n);
     run(cb_uninf, buf, n);
     run(cb_with_prior, buf, n);
     run(cb_unbiased_prior, buf, n);
@@ -234,6 +239,11 @@ int main(){
     AMS_sketch<TKey, TVol, D, W, hash32> l2_estimator;
     for(size_t i = 0; i < n; ++i){
         l2_estimator.update(buf[i].key, buf[i].volume);
+    }
+
+    CML2_sketch<TKey, TVol, D, W, hash32> cml2_estimator;
+    for(size_t i = 0; i < n; ++i){
+        cml2_estimator.update(buf[i].key, buf[i].volume);
     }
 
     constant_CB_prior(cb_with_prior, l0_estimator);
@@ -309,23 +319,38 @@ int main(){
     print_statistics_comparison(cb_with_prior, cb_imp);
     */
 
-    std::cout << "CCB Uninformed" << std::endl;
-    print_statistics(ccb_uninf);
+   /*
+    std::cout << l2_estimator.l2_estimate() << std::endl;
+    std::cout << cml2_estimator.l2_estimate() << std::endl;
+    std::cout << cb_cm.l1 * cb_cm.l1 / l0_estimator.count() << std::endl;
+    std::cout << l0_estimator.count() << std::endl;
+    */
 
-    std::cout << std::endl << "CCB With prior" << std::endl;
-    print_statistics(ccb_with_prior);
+    std::cout << "CB Uninformed" << std::endl;
+    print_statistics(cb_uninf);
 
-    std::cout << std::endl << "CCB unbiased prior" << std::endl;
-    print_statistics(ccb_unbiased_prior);
+    std::cout << std::endl << "CB With prior" << std::endl;
+    print_statistics(cb_with_prior);
 
-    std::cout << std::endl << "CCB improved" << std::endl;
-    print_statistics(ccb_imp);
+    std::cout << std::endl << "CB unbiased prior" << std::endl;
+    print_statistics(cb_unbiased_prior);
+
+    std::cout << std::endl << "CB improved" << std::endl;
+    print_statistics(cb_imp);
+
+    std::cout << std::endl << "CB CM" << std::endl;
+    print_statistics(cb_cm);
+
+    std::cout << std::endl << "C" << std::endl;
+    print_statistics(c);
+
+    std::cout << std::endl << "CM" << std::endl;
+    print_statistics(cm);
 
     std::cout << std::endl << "CCB CM" << std::endl;
     print_statistics(ccb_cm);
 
     std::cout << std::endl << "Comparison" << std::endl;
-    print_statistics_comparison(ccb_imp, ccb_cm);
-
+    print_statistics_comparison(ccb_cm, ccb_unbiased_prior);
 
 }
